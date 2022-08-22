@@ -26,7 +26,7 @@ HOST_CPUS    = [ 0,  1,  2,
                  8,  9, 10]
 
 # Pinning qemu management threads to host process cpuset
-MGMT_CPUS = HOST_CPUS
+MGMT_CPUS    = HOST_CPUS
 
 # Dedicating a core to qemu io threads
 QEMU_IO_CPUS = [ 3,
@@ -111,22 +111,7 @@ class QMP:
         return io_threads['return']
 
 
-def release_cpus_to_host(cpuset=ALL_CPUS):
-    cpu_list = ','.join(str(s) for s in cpuset)
-    for sslice in ["user", "system", "init"]:
-        cmd = [
-            "systemctl",
-            "set-property",
-            "--runtime",
-            "--",
-            f"{sslice}.slice",
-            f"AllowedCPUs={cpu_list}",
-        ]
-        print(' '.join(cmd))
-        subprocess.run(cmd, check=True)
-
-
-def isolate_cpus_from_host(cpuset=HOST_CPUS):
+def update_systemd_slices_cpuset(cpuset):
     cpu_list = ','.join(str(s) for s in cpuset)
     for sslice in ["user", "system", "init"]:
         cmd = [
@@ -141,7 +126,7 @@ def isolate_cpus_from_host(cpuset=HOST_CPUS):
 
 
 def main():
-    isolate_cpus_from_host()
+    update_systemd_slices_cpuset(HOST_CPUS)
 
     mgmt_pids = []
     with QMP() as qmp:
@@ -176,6 +161,8 @@ def main():
                 # Use python to pin affinity
                 os.sched_setaffinity(thread_pid, {processor})
 
+    # return all cpus to host
+    #update_systemd_slices_cpuset(ALL_CPUS)
 
 if __name__ == '__main__':
     main()
