@@ -1,0 +1,8 @@
+[Unit]
+Description=QEMU slice
+Before=slices.target
+
+[Slice]
+# NOTE: ultimately I found this more cumbersome to use, at least for now
+# Isolate qemu processes to these CPUs
+#AllowedCPUs=2-7,10-15
