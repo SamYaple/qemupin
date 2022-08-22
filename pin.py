@@ -125,6 +125,11 @@ def update_systemd_slices_cpuset(cpuset):
         subprocess.run(cmd, check=True)
 
 
+def set_cpus_for_process(pid, cpuset, comment=""):
+    print(f"{comment:8} -> {pid:8} -> {cpuset}")
+    os.sched_setaffinity(pid, cpuset)
+
+
 def main():
     update_systemd_slices_cpuset(HOST_CPUS)
 
@@ -133,19 +138,18 @@ def main():
         vcpu_info  = qmp.query_cpu_topology()
         io_threads = qmp.query_io_threads()
 
+        # TODO: replace this with -pidfile option in qemu
         # Get the parent pid from the socket while we are still attached
         ppid = qmp.stream.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED)
         mgmt_pids.append(ppid)
 
     if io_threads:
         for pid in [pid['thread-id'] for pid in io_threads]:
-            print(f"iothread -> {pid:8} -> {QEMU_IO_CPUS}")
-            os.sched_setaffinity(pid, QEMU_IO_CPUS)
+            set_cpus_for_process(pid, QEMU_IO_CPUS, "iothread")
 
     # TODO: still missing mon_iothread and im assuming others
     for pid in mgmt_pids:
-        print(f"worker   -> {pid:8} -> {MGMT_CPUS}")
-        os.sched_setaffinity(pid, MGMT_CPUS)
+        set_cpus_for_process(pid, MGMT_CPUS, "worker")
 
     for sidx, cpu_socket in enumerate(vcpu_info):
         for cidx, cpu_core in enumerate(cpu_socket):
@@ -156,10 +160,9 @@ def main():
                 idx += tidx * int(len(QEMU_CPUS) / 2)
                 thread_pid = cpu_thread['os_thread_id']
                 processor = QEMU_CPUS[idx] 
-                print(f"{sidx:2} {cidx:2} {tidx:2} -> {thread_pid:8} -> {processor:2}")
 
-                # Use python to pin affinity
-                os.sched_setaffinity(thread_pid, {processor})
+                socket_core_thread = f"{sidx:2} {cidx:2} {tidx:2}"
+                set_cpus_for_process(pid, [processor], socket_core_thread)
 
     # return all cpus to host
     #update_systemd_slices_cpuset(ALL_CPUS)
