@@ -162,7 +162,7 @@ def main():
                 processor = QEMU_CPUS[idx] 
 
                 socket_core_thread = f"{sidx:2} {cidx:2} {tidx:2}"
-                set_cpus_for_process(pid, [processor], socket_core_thread)
+                set_cpus_for_process(thread_pid, [processor], socket_core_thread)
 
     # return all cpus to host
     #update_systemd_slices_cpuset(ALL_CPUS)

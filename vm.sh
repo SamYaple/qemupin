@@ -66,8 +66,8 @@ QEMU_OPTS=(
     -drive if=none,id=vol0,file=/dev/zvol/zroot/ZVOL/gaming_vm,format=raw,cache=none,aio=native,discard=unmap,detect-zeroes=unmap,copy-on-read=on
 
     # Attach iso to IDE; for when Windows isnt preloaded with virtio drivers
-    #-device ide-cd,drive=cd1,bus=ide.0
-    #-drive if=none,id=cd1,media=cdrom,file=./Win10_21H2_English_x64.iso
+    #-device ide-cd,drive=cd0,bus=ide.0
+    #-drive if=none,id=cd0,media=cdrom,file=/home/sam/workspace/gaming_vm/virtio.iso
 
     # Network
     -device virtio-net-pci,netdev=mynet0
